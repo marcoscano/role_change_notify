@@ -1,5 +1,5 @@
 role_change_notify.admin_settings:
-  path: '/admin/config/role_change_notify'
+  path: '/admin/config/people/role_change_notify'
   defaults:
     _form: '\Drupal\role_change_notify\Form\RolechangenotifySettingsForm'
     _title: 'Role Change Notify Settings'

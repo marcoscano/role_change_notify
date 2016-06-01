@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ * Contains role_change_notify.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use \Drupal\Core\Url;
+use \Drupal\Core\Cache\Cache;
+
+const ROLE_CHANGE_NOTIFY_SUBJECT_DEFAULT = 'Role [user:role-changed] added for [user:name] at [site:name]';
+const ROLE_CHANGE_NOTIFY_BODY_DEFAULT = "[user:name],\n\nThe role \"[user:role-changed]\" has been added to your account at  [site:name].\n\nYou may now use the associated privileges.";
+
+/**
+ * Implements hook_help().
+ */
+function role_change_notify_help($route_name, RouteMatchInterface $route_match) {
+  $output = '';
+  switch ($route_name) {
+
+    case 'help.page.role_change_notify':
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Send email to users when a new role is assigned to them.') . '</p>';
+      break;
+
+    case 'role_change_notify.admin_settings':
+      $config = \Drupal::config('system.site');
+      $site_mail = $config->get('mail');
+      if (!\Drupal::service('email.validator')->isValid($site_mail)) {
+        drupal_set_message(t('None of these notifications will be sent unless you specify a valid site !email_address on the !site_information settings page.', array('!email_address' => '<strong>' . t('E-mail address') . '</strong>', '!site_information' => \Drupal\Core\Link::fromTextAndUrl(t('Site information'), \Drupal\Core\Url::fromRoute('system.site_information_settings'))->toString())), 'error');
+      }
+      $output .= '<p>' . t('This page allows you to configure whether automatic emails should be sent to users when a new role is assigned to them. You define if an email should be sent for each role type, and if so, you define what the subject and body of the resulting email will be.') . '</p>'
+        . '<p>' . t('For any of the settings below, you can use placeholders which will be substituted with the current values for the user, role, and site.') . ' ';
+      $output .= '</p>';
+      break;
+
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function role_change_notify_theme($existing, $type, $theme, $path) {
+  $themes = [];
+
+  $themes['role_change_notify'] = [
+    'variables' => [
+
+    ],
+    // Note that there is no need to indicate the template name, in absence of
+    // it the system will assume "role_change_notify.html.twig", inside "templates" dir.
+  ];
+
+  return $themes;
+}
