@@ -41,27 +41,27 @@ class RolechangenotifySettingsForm extends ConfigFormBase {
     unset($roles[\Drupal\user\RoleInterface::AUTHENTICATED_ID]);
 
     if (empty($roles)) {
-      $form['noroles'] = array(
+      $form['noroles'] = [
         '#markup' => '<p><em>' . t("No roles have been set up except Authenticated User. \nPlease set up additional roles if you want to use role notification.") . '</em></p>',
-      );
+      ];
       return parent::buildForm($form, $form_state);
     }
 
     $config = $this->config('role_change_notify.settings');
-    $form['instructions'] = array(
+    $form['instructions'] = [
       '#markup' => '<p><strong>' . $this->t('Select roles for which notification should be sent:') . '</strong></p>',
-    );
+    ];
     foreach ($roles as $roleid => $roleobject) {
-      $form["role_change_notify_{$roleid}"] = array(
+      $form["role_change_notify_{$roleid}"] = [
         '#type' => 'checkbox',
         '#title' => $roleobject->get('label'),
         '#default_value' => $config->get("role_change_notify_{$roleid}"),
-      );
+      ];
     }
     $account_page_link = \Drupal\Core\Link::createFromRoute($this->t('Account settings'), 'entity.user.admin_form')->toString();
-    $form['settings_info'] = array(
-      '#markup' => '<p>' . t('E-mail content (subject and body text) can be configured on the !account_settings_link page.', array('!account_settings_link' => $account_page_link)) . '</p>',
-    );
+    $form['settings_info'] = [
+      '#markup' => '<p>' . t('E-mail content (subject and body text) can be configured on the !account_settings_link page.', ['!account_settings_link' => $account_page_link]) . '</p>',
+    ];
 
     return parent::buildForm($form, $form_state);
 

@@ -1,0 +1,10 @@
+services:
+  user_update_subscriber:
+    class: Drupal\role_change_notify\EventSubscriber\UserUpdateSubscriber
+    arguments:
+      - @config.factory
+      - @email.validator
+      - @logger.factory
+      - @plugin.manager.mail
+    tags:
+      - { name: event_subscriber }

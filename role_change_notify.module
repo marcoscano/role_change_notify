@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\role_change_notify\Event\RoleChangeNotifyUserUpdateEvent;
 use \Drupal\Core\Url;
 use \Drupal\Core\Cache\Cache;
 
@@ -63,35 +64,35 @@ function role_change_notify_form_user_admin_settings_alter(&$form, \Drupal\Core\
   $config = \Drupal::config('role_change_notify.settings');
   $email_token_help = t('Available variables are: [site:name], [site:url], [user:role-changed], [user:name], [user:mail], [site:login-url], [site:url-brief], [user:edit-url].');
 
-  $form['role_change_notify'] = array(
+  $form['role_change_notify'] = [
     '#type' => 'details',
     '#title' => t('Role change notifications'),
     '#open' => FALSE,
     '#description' => t('Edit the e-mail message sent to users when a role has been added to their account.') . ' ' . $email_token_help,
     '#group' => 'email',
     '#weight' => 20,
-  );
+  ];
   $subject_from_config = $config->get('role_change_notify_role_added_subject');
   $default_subject = !empty($subject_from_config) ? $subject_from_config : ROLE_CHANGE_NOTIFY_SUBJECT_DEFAULT;
-  $form['role_change_notify']['role_change_notify_role_added_subject'] = array(
+  $form['role_change_notify']['role_change_notify_role_added_subject'] = [
     '#type' => 'textfield',
     '#title' => t('Subject'),
     '#default_value' => $default_subject,
     '#size' => 72,
     '#maxlength' => 200,
-    '#token_types' => array('user'),
-  );
+    '#token_types' => ['user'],
+  ];
   $body_from_config = $config->get('role_change_notify_role_added_body');
   $default_body = !empty($body_from_config) ? $body_from_config : ROLE_CHANGE_NOTIFY_BODY_DEFAULT;
-  $form['role_change_notify']['role_change_notify_role_added_body'] = array(
+  $form['role_change_notify']['role_change_notify_role_added_body'] = [
     '#type' => 'textarea',
     '#title' => t('Body'),
     '#default_value' => $default_body,
     '#cols' => 72,
     '#rows' => 10,
     '#description' => '',
-    '#token_types' => array('user'),
-  );
+    '#token_types' => ['user'],
+  ];
 
   // @TODO Add token validation.
 //  if (\Drupal::moduleHandler()->moduleExists('token')) {
@@ -113,4 +114,12 @@ function role_change_notify_user_admin_settings_submit($form, FormStateInterface
     ->set('role_change_notify_role_added_subject', $form_state->getValue('role_change_notify_role_added_subject'))
     ->set('role_change_notify_role_added_body', $form_state->getValue('role_change_notify_role_added_body'))
     ->save();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function role_change_notify_user_update(Drupal\Core\Entity\EntityInterface $entity) {
+  // Trigger the event that a user entity was just updated.
+  \Drupal::service('event_dispatcher')->dispatch(\Drupal\role_change_notify\Event\RoleChangeNotifyEvents::USERUPDATE, new RoleChangeNotifyUserUpdateEvent($entity));
 }
