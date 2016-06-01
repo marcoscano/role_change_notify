@@ -1,0 +1,5 @@
+role_change_notify.settings:
+  title: 'Role Change Notifications'
+  description: 'Configure email notifications or other actions when a role is added to or removed from a user account.'
+  parent: system.admin_config_ui
+  route_name: role_change_notify.admin_settings

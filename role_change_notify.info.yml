@@ -1,0 +1,6 @@
+name: Role Change Notify
+type: module
+description: Send email to users when a new role is assigned to them.
+core: 8.x
+package: Other
+configure: role_change_notify.admin_settings

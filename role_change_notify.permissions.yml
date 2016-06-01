@@ -1,0 +1,4 @@
+administer role_change_notify:
+  title: 'Administer the role_change_notify module.'
+  description: 'Administer the settings for the Role Change Notify module.'
+  restrict access: TRUE

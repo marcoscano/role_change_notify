@@ -1,0 +1,14 @@
+{
+  "name": "drupal/role_change_notify",
+  "type": "drupal-module",
+  "description": "Send email to users when a new role is assigned to them.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/role_change_notify",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "http://drupal.org/project/issues/role_change_notify",
+    "source": "http://cgit.drupalcode.org/role_change_notify"
+  },
+  "require": { }
+}
