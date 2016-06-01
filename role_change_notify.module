@@ -55,3 +55,62 @@ function role_change_notify_theme($existing, $type, $theme, $path) {
 
   return $themes;
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function role_change_notify_form_user_admin_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  $config = \Drupal::config('role_change_notify.settings');
+  $email_token_help = t('Available variables are: [site:name], [site:url], [user:role-changed], [user:name], [user:mail], [site:login-url], [site:url-brief], [user:edit-url].');
+
+  $form['role_change_notify'] = array(
+    '#type' => 'details',
+    '#title' => t('Role change notifications'),
+    '#open' => FALSE,
+    '#description' => t('Edit the e-mail message sent to users when a role has been added to their account.') . ' ' . $email_token_help,
+    '#group' => 'email',
+    '#weight' => 20,
+  );
+  $subject_from_config = $config->get('role_change_notify_role_added_subject');
+  $default_subject = !empty($subject_from_config) ? $subject_from_config : ROLE_CHANGE_NOTIFY_SUBJECT_DEFAULT;
+  $form['role_change_notify']['role_change_notify_role_added_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $default_subject,
+    '#size' => 72,
+    '#maxlength' => 200,
+    '#token_types' => array('user'),
+  );
+  $body_from_config = $config->get('role_change_notify_role_added_body');
+  $default_body = !empty($body_from_config) ? $body_from_config : ROLE_CHANGE_NOTIFY_BODY_DEFAULT;
+  $form['role_change_notify']['role_change_notify_role_added_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $default_body,
+    '#cols' => 72,
+    '#rows' => 10,
+    '#description' => '',
+    '#token_types' => array('user'),
+  );
+
+  // @TODO Add token validation.
+//  if (\Drupal::moduleHandler()->moduleExists('token')) {
+//    $form['role_change_notify']['role_change_notify_role_added_subject']['#element_validate'] = array('token_element_validate');
+//    $form['role_change_notify']['role_change_notify_role_added_body']['#element_validate'] = array('token_element_validate');
+//  }
+
+  // Add a custom submit to save the configuration values we just added.
+  $form['#submit'][] = 'role_change_notify_user_admin_settings_submit';
+}
+
+/**
+ * Form submission handler for user_admin_settings().
+ *
+ * @see role_change_notify_form_user_admin_settings_alter()
+ */
+function role_change_notify_user_admin_settings_submit($form, FormStateInterface $form_state) {
+  \Drupal::configFactory()->getEditable('role_change_notify.settings')
+    ->set('role_change_notify_role_added_subject', $form_state->getValue('role_change_notify_role_added_subject'))
+    ->set('role_change_notify_role_added_body', $form_state->getValue('role_change_notify_role_added_body'))
+    ->save();
+}
