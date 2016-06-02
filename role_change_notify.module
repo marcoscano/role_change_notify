@@ -7,11 +7,10 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\role_change_notify\Event\RoleChangeNotifyUserUpdateEvent;
-use \Drupal\Core\Url;
-use \Drupal\Core\Cache\Cache;
+use Drupal\Component\Utility\Html;
 
-const ROLE_CHANGE_NOTIFY_SUBJECT_DEFAULT = 'Role [user:role-changed] added for [user:name] at [site:name]';
-const ROLE_CHANGE_NOTIFY_BODY_DEFAULT = "[user:name],\n\nThe role \"[user:role-changed]\" has been added to your account at  [site:name].\n\nYou may now use the associated privileges.";
+const ROLE_CHANGE_NOTIFY_SUBJECT_DEFAULT = 'Role [role_change_notify:role_added] added for [user:name] at [site:name]';
+const ROLE_CHANGE_NOTIFY_BODY_DEFAULT = "[user:name],\n\nThe role \"[role_change_notify:role_added]\" has been added to your account at  [site:name].\n\nYou may now use the associated privileges.";
 
 /**
  * Implements hook_help().
@@ -94,11 +93,10 @@ function role_change_notify_form_user_admin_settings_alter(&$form, \Drupal\Core\
     '#token_types' => ['user'],
   ];
 
-  // @TODO Add token validation.
-//  if (\Drupal::moduleHandler()->moduleExists('token')) {
-//    $form['role_change_notify']['role_change_notify_role_added_subject']['#element_validate'] = array('token_element_validate');
-//    $form['role_change_notify']['role_change_notify_role_added_body']['#element_validate'] = array('token_element_validate');
-//  }
+  if (\Drupal::moduleHandler()->moduleExists('token')) {
+    $form['role_change_notify']['role_change_notify_role_added_subject']['#element_validate'] = array('token_element_validate');
+    $form['role_change_notify']['role_change_notify_role_added_body']['#element_validate'] = array('token_element_validate');
+  }
 
   // Add a custom submit to save the configuration values we just added.
   $form['#submit'][] = 'role_change_notify_user_admin_settings_submit';
@@ -109,7 +107,7 @@ function role_change_notify_form_user_admin_settings_alter(&$form, \Drupal\Core\
  *
  * @see role_change_notify_form_user_admin_settings_alter()
  */
-function role_change_notify_user_admin_settings_submit($form, FormStateInterface $form_state) {
+function role_change_notify_user_admin_settings_submit($form, \Drupal\Core\Form\FormStateInterface $form_state) {
   \Drupal::configFactory()->getEditable('role_change_notify.settings')
     ->set('role_change_notify_role_added_subject', $form_state->getValue('role_change_notify_role_added_subject'))
     ->set('role_change_notify_role_added_body', $form_state->getValue('role_change_notify_role_added_body'))
@@ -122,4 +120,51 @@ function role_change_notify_user_admin_settings_submit($form, FormStateInterface
 function role_change_notify_user_update(Drupal\Core\Entity\EntityInterface $entity) {
   // Trigger the event that a user entity was just updated.
   \Drupal::service('event_dispatcher')->dispatch(\Drupal\role_change_notify\Event\RoleChangeNotifyEvents::USERUPDATE, new RoleChangeNotifyUserUpdateEvent($entity));
+}
+
+/**
+ * Implements hook_mail().
+ */
+function role_change_notify_mail($key, &$message, $params) {
+  if ($key == 'role_added') {
+    $message['subject'] = Html::escape($params['context']['subject']);
+    $message['body'][] = Html::escape($params['context']['body']);
+    $message['from'] = $params['context']['from'];
+    $message['headers'] = array_merge($message['headers'], $params['context']['headers']);
+  }
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function role_change_notify_token_info() {
+  $info['types']['role_change_notify'] = array(
+    'name' => t('Role Change Notify token type.'),
+    'description' => t('Role Change Notify token type.'),
+  );
+
+  $info['tokens']['role_change_notify']['role_added'] = array(
+    'name' => t('The role added to the account.'),
+    'description' => t('The role added to the account.'),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function role_change_notify_tokens($type, $tokens, array $data, array $options, \Drupal\Core\Render\BubbleableMetadata $bubbleable_metadata) {
+
+  if ($type == 'role_change_notify') {
+    $replacements = [];
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'role_added':
+          $replacements[$original] = $data[$name];
+      }
+    }
+
+    return $replacements;
+  }
 }
